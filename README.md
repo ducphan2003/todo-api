@@ -16,12 +16,22 @@ The application follows a clean architecture pattern to keep the code simple, or
 
 -  **Repository Layer**: Interacts with the database using GORM.
 ## Start Development
-### Step 1: Start Containers
+### Step 1: Create file .env
+```bash
+PG_USER=postgres
+PG_PASSWORD=Admin123
+PG_DATABASE=todo
+PG_PORT=5432
+PG_HOST=todo-db
+PG_CONNECT_TIMEOUT=300
+PG_TIMEZOME=UTC
+```
+### Step 2: Start Containers
 Start the server and database containers using Docker Compose:
 ```bash
 docker-compose  --profile  dev  up
 ```
-### Step 2: Migrate All Database
+### Step 3: Migrate All Database
 Build the production image and run the database migrations:
 ```bash
 docker-compose  --profile  prod  build
