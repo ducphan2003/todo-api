@@ -29,14 +29,22 @@ PG_TIMEZOME=UTC
 ### Step 2: Start Containers
 Start the server and database containers using Docker Compose:
 ```bash
-docker-compose  --profile  dev  up
+docker-compose --profile dev build
+
+docker-compose --profile dev up -d
 ```
 ### Step 3: Migrate All Database
-Build the production image and run the database migrations:
+`production`:Build the production image and run the database migrations:
 ```bash
-docker-compose  --profile  prod  build
+docker-compose --profile prod build
 
-docker-compose  run  --rm  api-prod  migrate
+docker-compose run --rm api-prod migrate
+```
+`dev`:Build the production image and run the database migrations:
+```bash
+docker cp ./data_init.sql todo-db:/docker-entrypoint-initdb.d/data_init.sql
+
+docker exec -i todo-db psql -U postgres -d todo -f /docker-entrypoint-initdb.d/data_init.sql
 ```
 if you want to migrate a single table
 ```bash
