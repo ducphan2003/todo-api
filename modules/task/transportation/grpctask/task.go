@@ -2,16 +2,13 @@ package grpctask
 
 import (
 	"context"
-	"fmt"
-	"google.golang.org/grpc/metadata"
 	"todo-api/common"
+	"todo-api/database"
 	"todo-api/middleware"
 	"todo-api/modules/task/taskbiz"
 	"todo-api/modules/task/taskmodel"
 	"todo-api/modules/task/taskstorage"
 	"todo-api/proto/taskpb"
-
-	"todo-api/database"
 )
 
 type GRPCTaskServer struct {
@@ -23,27 +20,11 @@ func NewGRPCTaskServer() *GRPCTaskServer {
 }
 
 func (s *GRPCTaskServer) CreateTask(ctx context.Context, req *taskpb.CreateTaskRequest) (*taskpb.CreateTaskResponse, error) {
-	// md, ok := common.GetMetadataFromContext(ctx)
-	// if !ok {
-	// 	return nil, common.ErrInvalidRequest(nil)
-	// }
-	// fmt.Println(md)
-
-	// token := md["Authorization"]
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, common.ErrNoPermission(nil)
+	token, error := common.GetTokenFromContext(ctx)
+	if error != nil {
+		return nil, error
 	}
 
-	// Lấy token từ metadata
-	token := ""
-	if val, ok := md["authorization"]; ok {
-		token = val[0]
-	} else {
-		return nil, common.ErrNoPermission(nil)
-	}
-	fmt.Println(token)
 	if token == "" {
 		return nil, common.ErrInvalidRequest(nil)
 	}
@@ -76,6 +57,20 @@ func (s *GRPCTaskServer) CreateTask(ctx context.Context, req *taskpb.CreateTaskR
 }
 
 func (s *GRPCTaskServer) ReadTask(ctx context.Context, req *taskpb.ReadTaskRequest) (*taskpb.ReadTasksResponse, error) {
+	token, error := common.GetTokenFromContext(ctx)
+	if error != nil {
+		return nil, error
+	}
+
+	if token == "" {
+		return nil, common.ErrInvalidRequest(nil)
+	}
+
+	err := middleware.RequireAuth(ctx, token)
+	if err != nil {
+		return nil, common.ErrNoPermission(err)
+	}
+
 	store := taskstorage.NewSQlStore(database.DB)
 	biz := taskbiz.NewFindBiz(store)
 
@@ -109,6 +104,19 @@ func (s *GRPCTaskServer) ReadTask(ctx context.Context, req *taskpb.ReadTaskReque
 }
 
 func (s *GRPCTaskServer) UpdateTask(ctx context.Context, req *taskpb.UpdateTaskRequest) (*taskpb.ReadTaskResponse, error) {
+	token, error := common.GetTokenFromContext(ctx)
+	if error != nil {
+		return nil, error
+	}
+
+	if token == "" {
+		return nil, common.ErrInvalidRequest(nil)
+	}
+
+	if err := middleware.RequireAuth(ctx, token); err != nil {
+		return nil, common.ErrNoPermission(err)
+	}
+
 	store := taskstorage.NewSQlStore(database.DB)
 	biz := taskbiz.NewUpdateBiz(store)
 
@@ -120,8 +128,7 @@ func (s *GRPCTaskServer) UpdateTask(ctx context.Context, req *taskpb.UpdateTaskR
 		Priority:    req.GetPriority(),
 	}
 
-	err := biz.UpdateTask(ctx, uint(req.GetId()), &taskData)
-	if err != nil {
+	if err := biz.UpdateTask(ctx, uint(req.GetId()), &taskData); err != nil {
 		return nil, common.ErrCannotCreateEntity(taskmodel.Task{}.TableName(), err)
 	}
 
@@ -135,7 +142,19 @@ func (s *GRPCTaskServer) UpdateTask(ctx context.Context, req *taskpb.UpdateTaskR
 }
 
 func (s *GRPCTaskServer) DeleteTask(ctx context.Context, req *taskpb.DeleteTaskRequest) (*taskpb.EmptyResponse, error) {
-	fmt.Println(req)
+	token, error := common.GetTokenFromContext(ctx)
+	if error != nil {
+		return nil, error
+	}
+
+	if token == "" {
+		return nil, common.ErrInvalidRequest(nil)
+	}
+
+	if err := middleware.RequireAuth(ctx, token); err != nil {
+		return nil, common.ErrNoPermission(err)
+	}
+
 	store := taskstorage.NewSQlStore(database.DB)
 	biz := taskbiz.NewDeleteBiz(store)
 
