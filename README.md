@@ -33,22 +33,22 @@ docker-compose --profile dev build
 
 docker-compose --profile dev up -d
 ```
-### Step 3: Migrate All Database
+### Step 3: Migrate All Database (please run dev)
 `production`:Build the production image and run the database migrations:
 ```bash
 docker-compose --profile prod build
 
 docker-compose run --rm api-prod migrate
 ```
+if you want to migrate a single table
+```bash
+docker-compose  run  --rm  api-prod  migrate  -table  table_name
+```
 `dev`:Build the production image and run the database migrations:
 ```bash
 docker cp ./data_init.sql todo-db:/docker-entrypoint-initdb.d/data_init.sql
 
 docker exec -i todo-db psql -U postgres -d todo -f /docker-entrypoint-initdb.d/data_init.sql
-```
-if you want to migrate a single table
-```bash
-docker-compose  run  --rm  api-prod  migrate  -table  table_name
 ```
 ## Sample gRPC Commands
 ### 1. Sign Up
@@ -83,7 +83,7 @@ grpcurl -d '{"id":6}' -H 'Authorization: Bearer <token>' -plaintext localhost:50
 -   The clean architecture pattern makes the codebase easy to understand and maintain.
 -   Using Docker ensures that the application can be easily run locally and in different environments.
 -   gRPC provides a high-performance and scalable way to handle communication between services.
-## What Else I Want You to Know
+## What Else I Want You to Know about however i do not have enough time to complete
 1. Bổ sung, tổ chức database
 2. Xác thực người dùng có quyền thực hiện với data của họ
 Cấu trúc transportation/grpc thành các file theo chức năng
