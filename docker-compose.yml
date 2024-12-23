@@ -1,0 +1,66 @@
+version: "3.9"
+
+volumes:
+  volumes:
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: todo-api
+    profiles: ["dev"]
+    ports:
+      - 50051:50051
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - todo-api
+
+  api-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: todo-api-prod
+    profiles: ["prod"]
+    ports:
+      - 50052:50051
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - todo-api
+
+  db:
+    container_name: todo-db
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+      - PGDATA=/data/postgres
+      # - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./volumes:/data/postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d todo -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - todo-api
+
+networks:
+  todo-api:
+    name: todo-api
+    external: false
