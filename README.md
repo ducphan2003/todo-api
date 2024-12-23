@@ -84,6 +84,18 @@ grpcurl -d '{"id":6}' -H 'Authorization: Bearer <token>' -plaintext localhost:50
 -   Using Docker ensures that the application can be easily run locally and in different environments.
 -   gRPC provides a high-performance and scalable way to handle communication between services.
 ## What Else I Want You to Know
--   Due to time constraints, some advanced features and optimizations were not implemented.
--   Additional unit tests and integration tests would further improve the reliability of the application.
--   Future improvements could include better error handling and more comprehensive logging.
+1. Bổ sung, tổ chức database
+2. Xác thực người dùng có quyền thực hiện với data của họ
+Cấu trúc transportation/grpc thành các file theo chức năng
+Example:
+transportation
+|---grpcuser
+    |---create.go
+    |---update.go
+    ...
+3. Định nghĩa lại response của gRPC:
+message CommonResponse {
+  int32 code = 1;          // Mã trạng thái (0: thành công, >0: lỗi)
+  string message = 2;      // Thông báo lỗi hoặc thành công
+  google.protobuf.Any data = 3; // Dữ liệu kết quả (nếu thành công)
+}
